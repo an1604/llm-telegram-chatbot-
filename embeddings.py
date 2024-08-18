@@ -50,8 +50,8 @@ class embeddings(object):
         self.knowledgebase = None
         self.index = faiss.IndexFlatL2(384)
 
-        if len(self.learner) > 0:
-            active_learning_thread.join()
+        # if len(self.learner) > 0:
+        #     active_learning_thread.join()
 
     @staticmethod
     def apply_active_learning(knowledgebase_file_path, learner):
