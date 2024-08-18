@@ -1,0 +1,9 @@
+Hi {name},
+
+I hope this message finds you well.
+
+We are scheduled to have an important Zoom meeting with senior management shortly, and your presence would be highly valued. The discussion will focus on the transfer of $10,000 to {target}, and your expertise in the finance department is essential.
+
+Please join us using the following Zoom link: {zoom_url}.
+
+The meeting will begin in 5 minutes. Thank you in advance for your participation.
