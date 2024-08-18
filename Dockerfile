@@ -10,6 +10,7 @@ COPY . .
 # Install any needed packages specified in requirements.txt
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
+RUN chmod +x /app/start_ollama.sh
 
 # Run chatbot_server.py when the container launches
 CMD ["python", "chatbot_server.py"]
