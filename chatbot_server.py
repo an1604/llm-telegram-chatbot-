@@ -101,7 +101,7 @@ class ChatBot(object):
         self.dispatcher = None
 
         self.attack_router = Router(name=__name__)
-        handle_routes(self.attack_router)
+        handle_routes(self.attack_router, user_attacks)
         self.shutdown_event = Event()
 
     async def start(self):

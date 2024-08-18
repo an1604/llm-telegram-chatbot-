@@ -6,7 +6,7 @@ from aiogram.fsm.storage.memory import SimpleEventIsolation
 from aiogram.types import Message
 
 
-def handle_routes(attack_router):
+def handle_routes(attack_router, user_attacks):
     @attack_router.message(Command("help"))
     async def help_command(message: Message) -> None:
         await message.answer("/start - starts the attack initialization.\n"
