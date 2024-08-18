@@ -24,7 +24,6 @@ class Learner(object):
                         outfile.write(f"'{question}'" + ';' + f"'{answer}'" + '\n')
                         outfile.write('\n')
             except Empty:
-                print('I am alive')
                 continue
 
     def stop_active_learning(self):
