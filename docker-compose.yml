@@ -34,7 +34,7 @@ services:
       - "3333:3333"
     networks:
       - private_network
-    command: /app/start_ollama.sh  # Add this line to run the script
+    command: /app/start_ollama.sh
 
 volumes:
   ollama:
