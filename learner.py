@@ -5,9 +5,9 @@ from queue import Queue, Empty
 class Learner(object):
     def __init__(self):
         self.samples = Queue()
+        self.stop = False
         self.active_learning_thread = Thread(target=self.apply_active_learning)
         self.active_learning_thread.start()
-        self.stop = False
 
     def add_sample(self, sample):
         self.samples.put(sample)
