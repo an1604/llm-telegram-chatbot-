@@ -2,6 +2,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from os import getenv
+from threading import Event
 from typing import Any
 
 from aiogram import Bot, Dispatcher, F, Router
@@ -13,10 +14,12 @@ from aiogram.types import Message
 
 from llm import llm_factory
 from dotenv import load_dotenv
+from learner import learner
 
 load_dotenv()
 
 TOKEN = getenv("DECEPTIFYBOT_TOKEN")
+user_attacks = {}
 
 
 @dataclass
@@ -25,6 +28,52 @@ class Attack:
         self.attack_type = attack_type
         self.profile_name = profile_name
         self.llm = llm_factory.generate_new_attack(attack_type, profile_name)
+
+
+def handle_routes(attack_router):
+    @attack_router.message(Command("help"))
+    async def help_command(message: Message) -> None:
+        await message.answer("/start - starts the attack initialization.\n"
+                             "/type - selects the attack type.\n"
+                             "/run - starts the attack.\n"
+                             "Note: The attack will start ONLY if you completed the above steps.")
+
+    @attack_router.message(Command("start"))
+    async def command_start(message: Message, scenes: ScenesManager):
+        await scenes.close()
+        await message.answer(
+            "Hi! It's Deceptify bot. To start a demo, first use the /type command.")
+
+    @attack_router.message(Command("type"))
+    async def attack_type_command(message: Message, scenes: ScenesManager, state: FSMContext):
+        await scenes.close()
+        await state.update_data(attack_type=None)
+        await message.answer("Choose an attack type:\n"
+                             "1. Bank\n"
+                             "2. Delivery\n"
+                             "3. Hospital")
+
+    @attack_router.message(F.text.in_(['Bank', 'Delivery', 'Hospital']))
+    async def set_attack_type(message: Message, state: FSMContext):
+        await state.update_data(attack_type=message.text)
+        await message.answer(f"Attack type '{message.text}' chosen. You can now run the attack with /run.")
+
+
+def create_dispatcher(attack_router):
+    # Event isolation is needed to correctly handle fast user responses
+    dispatcher = Dispatcher(
+        events_isolation=SimpleEventIsolation(),
+    )
+    dispatcher.include_router(attack_router)
+
+    # To use scenes, you should create a SceneRegistry and register your scenes there
+    scene_registry = SceneRegistry(dispatcher)
+    # ... and then register a scene in the registry
+    # by default, Scene will be mounted to the router that passed to the SceneRegistry,
+    # but you can specify the router explicitly using the `router` argument
+    scene_registry.add(AttackScene)
+
+    return dispatcher
 
 
 class AttackScene(Scene, state="run"):
@@ -72,64 +121,36 @@ class AttackScene(Scene, state="run"):
         return await message.answer(text=response)
 
 
-user_attacks = {}
-attack_router = Router(name=__name__)
-# Add handler that initializes the scene
-attack_router.message.register(AttackScene.as_handler(), Command("run"))
+class ChatBot(object):
+    def __init__(self):
+        self.bot = None
+        self.dispatcher = None
 
+        self.attack_router = Router(name=__name__)
+        handle_routes(self.attack_router)
+        self.shutdown_event = Event()
 
-@attack_router.message(Command("help"))
-async def help_command(message: Message) -> None:
-    await message.answer("/start - starts the attack initialization.\n"
-                         "/type - selects the attack type.\n"
-                         "/run - starts the attack.\n"
-                         "Note: The attack will start ONLY if you completed the above steps.")
+    async def start(self):
+        # Add handler that initializes the scene
+        self.attack_router.message.register(AttackScene.as_handler(), Command("run"))
+        self.dispatcher = create_dispatcher(self.attack_router)
 
+        self.bot = Bot(token=TOKEN)
+        await self.dispatcher.start_polling(self.bot)
 
-@attack_router.message(Command("start"))
-async def command_start(message: Message, scenes: ScenesManager):
-    await scenes.close()
-    await message.answer(
-        "Hi! It's Deceptify bot. To start a demo, first use the /type command.")
-
-
-@attack_router.message(Command("type"))
-async def attack_type_command(message: Message, scenes: ScenesManager, state: FSMContext):
-    await scenes.close()
-    await state.update_data(attack_type=None)
-    await message.answer("Choose an attack type:\n"
-                         "1. Bank\n"
-                         "2. Delivery\n"
-                         "3. Hospital")
-
-
-@attack_router.message(F.text.in_(['Bank', 'Delivery', 'Hospital']))
-async def set_attack_type(message: Message, state: FSMContext):
-    await state.update_data(attack_type=message.text)
-    await message.answer(f"Attack type '{message.text}' chosen. You can now run the attack with /run.")
-
-
-def create_dispatcher():
-    # Event isolation is needed to correctly handle fast user responses
-    dispatcher = Dispatcher(
-        events_isolation=SimpleEventIsolation(),
-    )
-    dispatcher.include_router(attack_router)
-
-    # To use scenes, you should create a SceneRegistry and register your scenes there
-    scene_registry = SceneRegistry(dispatcher)
-    # ... and then register a scene in the registry
-    # by default, Scene will be mounted to the router that passed to the SceneRegistry,
-    # but you can specify the router explicitly using the `router` argument
-    scene_registry.add(AttackScene)
-
-    return dispatcher
+    def stop(self):
+        self.shutdown_event.set()
+        self.dispatcher.shutdown()
+        learner.stop_active_learning()
 
 
 async def main():
-    dp = create_dispatcher()
-    bot = Bot(token=TOKEN)
-    await dp.start_polling(bot)
+    chatbot = ChatBot()
+    try:
+        await chatbot.start()
+    except (KeyboardInterrupt, SystemExit):
+        logging.info("Shutting down bot...")
+        chatbot.stop()
 
 
 if __name__ == "__main__":

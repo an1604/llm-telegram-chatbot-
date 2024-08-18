@@ -1,0 +1,4 @@
+user: hello jason
+assistant: We had a suspicious activity in your account and we need verification to make action
+user: bye
+assistant: Goodbye
