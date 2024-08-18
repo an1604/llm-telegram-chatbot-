@@ -54,9 +54,22 @@ def handle_routes(attack_router):
                              "3. Hospital")
 
     @attack_router.message(F.text.in_(['Bank', 'Delivery', 'Hospital']))
-    async def set_attack_type(message: Message, state: FSMContext):
+    async def set_attack_type_from_str(message: Message, state: FSMContext):
         await state.update_data(attack_type=message.text)
         await message.answer(f"Attack type '{message.text}' chosen. You can now run the attack with /run.")
+
+    @attack_router.message(F.text.in_(['1', '2', '3']))
+    async def set_attack_type_from_number(message: Message, state: FSMContext):
+        attack_type = None
+        if message.text == "1":
+            attack_type = 'Bank'
+        elif message.text == "2":
+            attack_type = 'Delivery'
+        else:
+            attack_type = 'Hospital'
+
+        await state.update_data(attack_type=attack_type)
+        await message.answer(f"Attack type '{attack_type}' chosen. You can now run the attack with /run.")
 
 
 def create_dispatcher(attack_router):
