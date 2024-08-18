@@ -129,7 +129,7 @@ class AttackScene(Scene, state="run"):
 
         except Exception as e:
             print(f"Error: {e}")
-            return await message.answer("Please repeat it again.")
+            return await message.answer("Please generate a new attack using /type.")
 
         return await message.answer(text=response)
 
