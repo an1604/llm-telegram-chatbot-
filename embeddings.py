@@ -76,12 +76,19 @@ class embeddings(object):
         self.faq = self.get_faq()
 
     def init_knowledgebase_path(self, knowledgebase):
-        dire = os.path.dirname(os.path.abspath(__file__)) + f'\\prompts\\{knowledgebase.lower()}\\'
+        dire = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prompts', knowledgebase.lower())
+
         if knowledgebase is None:
             knowledgebase = 'knowledgebase_custom.csv'
             self.knowledgebase_file_path = os.path.join(dire, knowledgebase)
         else:
             self.knowledgebase_file_path = os.path.join(dire, f'{knowledgebase}-knowledge.csv')
+
+        if not os.path.exists(dire):
+            os.makedirs(dire)
+
+        if not os.path.exists(self.knowledgebase_file_path):
+            raise FileNotFoundError(f"The knowledge base file {self.knowledgebase_file_path} does not exist.")
 
     def save_sentences_map(self):
         sentences_map_json = json.dumps(self.sentences_map)
