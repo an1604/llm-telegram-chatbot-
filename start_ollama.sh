@@ -5,4 +5,4 @@ until [ "$(docker inspect -f '{{.State.Health.Status}}' ollama)" == "healthy" ];
     sleep 5
 done
 
-docker exec -it ollama ollama run llama2
+docker exec -it ollama ollama run llama3
