@@ -1,6 +1,5 @@
 import json
 import os
-from threading import Thread
 
 import faiss
 import numpy as np
@@ -11,8 +10,6 @@ from queue import Queue, Empty
 
 class embeddings(object):
     def __init__(self, knowledgebase=None):
-        self.learner = Queue()  # list of tuples for active learning
-
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         self.index = faiss.IndexFlatL2(384)
 
@@ -26,7 +23,7 @@ class embeddings(object):
         self.faq = None
 
         self.stop = False
-        self.active_learner_threshold = 1.19999  # Decide which threshold is valid to apply active learning.
+        self.active_learner_threshold = 1.29999  # Decide which threshold is valid to apply active learning.
 
     def get_nearest_neighbors(self, vector, k=3):
         index = faiss.read_index(
