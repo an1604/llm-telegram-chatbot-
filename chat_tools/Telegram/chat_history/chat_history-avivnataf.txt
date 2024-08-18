@@ -1,6 +1,0 @@
-user: hello there
-assistant: We had a system reset and we need to verify our clients again
-user: what do you need
-assistant: I need your ID and address
-user: bye
-assistant: Goodbye
