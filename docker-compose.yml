@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  ollama:
+    container_name: ollama
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    tty: true
+    restart: always
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:11434"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - private_network
+
+  telegram_chatbot:
+    image: avivnat13/telegram_chatbot:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: always
+    ports:
+      - "3333:3333"
+    networks:
+      - private_network
+    command: /app/start_ollama.sh  # Add this line to run the script
+
+volumes:
+  ollama:
+
+networks:
+  private_network:
