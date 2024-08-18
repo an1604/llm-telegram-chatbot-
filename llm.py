@@ -12,6 +12,11 @@ model_name = 'llama3'  # REPLACE IT TO llama3 IF YOU RUN LOCALLY
 machine = 'localhost'  # REPLACE IT TO LOCALHOST IF YOU RUN LOCALLY
 
 
+def add_sample_for_learning(prompt, answer, knowledgebase_file_path):
+    print("add_sample_for_learning called with prompt: {}".format(prompt))
+    learner.add_sample((prompt, answer, knowledgebase_file_path))
+
+
 class Llm(object):
     def __init__(self):
         self.llm = Ollama(model=model_name)  # Switched the Ollama to ChatOllama
@@ -76,8 +81,7 @@ class Llm(object):
         self.chat_history.add_ai_response(answer)
 
         if apply_active_learning:
-            learner.add_sample((prompt, answer, self.embedding_model.knowledgebase_file_path))
-
+            add_sample_for_learning(prompt, answer, self.embedding_model.knowledgebase_file_path)
         if 'bye' in answer.lower() or 'bye' in prompt.lower():
             self.end_conv = True
             self.flush()

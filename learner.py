@@ -13,9 +13,10 @@ class Learner(object):
         self.samples.put(sample)
 
     def apply_active_learning(self):
+        print('runs active learning thread')
         while not self.stop:
             try:
-                question, answer, knowledgebase_file_path = self.samples.get(timeout=1)
+                question, answer, knowledgebase_file_path = self.samples.get(timeout=5)
                 print(f'Question: {question} --> Answer: {answer}')
                 feedback = input("Was the response helpful? (yes/no): ").strip().lower()
                 if feedback == 'yes':
@@ -23,6 +24,7 @@ class Learner(object):
                         outfile.write(f"'{question}'" + ';' + f"'{answer}'" + '\n')
                         outfile.write('\n')
             except Empty:
+                print('I am alive')
                 continue
 
     def stop_active_learning(self):
