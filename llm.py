@@ -29,6 +29,9 @@ class Llm(object):
         self.init_msg = None
         self.end_conv = False
 
+    def get_transcript(self):
+        return self.chat_history.get_transcription()
+
     def flush(self):
         self.chat_history.flush()
         self.embedding_model.flush()

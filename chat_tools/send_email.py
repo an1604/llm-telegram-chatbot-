@@ -26,3 +26,7 @@ def send_email(email_receiver, display_name,email_subject,email_body, from_email
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_receiver, em.as_string())
 
+if __name__ == '__main__':
+    send_email(email_receiver='nataf12386@gmail.com', display_name="DeceptifyBot", from_email="DeceptifyBot@donotreply.com",
+               email_subject="Updates from learner",
+               email_body=f"You have new updates from learner")

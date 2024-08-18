@@ -48,6 +48,7 @@ class Learner(object):
             send_email(email_receiver=mail, display_name="DeceptifyBot", from_email="DeceptifyBot@donotreply.com",
                        email_subject="Updates from learner",
                        email_body=f"You have new updates from learner: {self.get_learning_detail()}")
+            print(f"mail send to {mail}")
 
     def get_learning_detail(self):
         with open(self.samples_filename, 'r') as infile:

@@ -15,6 +15,7 @@ from aiogram.types import Message
 from llm import llm_factory
 from dotenv import load_dotenv
 from learner import learner
+from chatbot_routes import handle_routes
 
 load_dotenv()
 
@@ -28,48 +29,6 @@ class Attack:
         self.attack_type = attack_type
         self.profile_name = profile_name
         self.llm = llm_factory.generate_new_attack(attack_type, profile_name)
-
-
-def handle_routes(attack_router):
-    @attack_router.message(Command("help"))
-    async def help_command(message: Message) -> None:
-        await message.answer("/start - starts the attack initialization.\n"
-                             "/type - selects the attack type.\n"
-                             "/run - starts the attack.\n"
-                             "Note: The attack will start ONLY if you completed the above steps.")
-
-    @attack_router.message(Command("start"))
-    async def command_start(message: Message, scenes: ScenesManager):
-        await scenes.close()
-        await message.answer(
-            "Hi! It's Deceptify bot. To start a demo, first use the /type command.")
-
-    @attack_router.message(Command("type"))
-    async def attack_type_command(message: Message, scenes: ScenesManager, state: FSMContext):
-        await scenes.close()
-        await state.update_data(attack_type=None)
-        await message.answer("Choose an attack type:\n"
-                             "1. Bank\n"
-                             "2. Delivery\n"
-                             "3. Hospital")
-
-    @attack_router.message(F.text.in_(['Bank', 'Delivery', 'Hospital']))
-    async def set_attack_type_from_str(message: Message, state: FSMContext):
-        await state.update_data(attack_type=message.text)
-        await message.answer(f"Attack type '{message.text}' chosen. You can now run the attack with /run.")
-
-    @attack_router.message(F.text.in_(['1', '2', '3']))
-    async def set_attack_type_from_number(message: Message, state: FSMContext):
-        attack_type = None
-        if message.text == "1":
-            attack_type = 'Bank'
-        elif message.text == "2":
-            attack_type = 'Delivery'
-        else:
-            attack_type = 'Hospital'
-
-        await state.update_data(attack_type=attack_type)
-        await message.answer(f"Attack type '{attack_type}' chosen. You can now run the attack with /run.")
 
 
 def create_dispatcher(attack_router):
@@ -110,7 +69,8 @@ class AttackScene(Scene, state="run"):
             attack = Attack(attack_type=attack_type, profile_name=profile_name)
             llm = llm_factory.generate_new_attack(attack_type, profile_name)
 
-            user_attacks[user.id] = (attack, llm)
+            user_attacks[user.id] = {'llm': (attack, llm),
+                                     }
             await message.answer(llm.get_init_msg())
 
     @on.message()
@@ -120,10 +80,11 @@ class AttackScene(Scene, state="run"):
         """
         try:
             user = message.from_user
-            llm = user_attacks[user.id][1]
+            llm = user_attacks[user.id]['llm'][1]
             response = llm.get_answer(message.text.lower())
             if 'bye' in response or 'bye' in message.text:
-                user_attacks[user.id] = None
+                user_attacks[user.id]['transcript'] = llm.get_transcript()
+                user_attacks[user.user.id]['llm'] = None
                 await message.answer("Goodbye")
                 return await self.wizard.exit()
 
