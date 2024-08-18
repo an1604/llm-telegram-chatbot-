@@ -1,5 +1,6 @@
 from threading import Thread
 from queue import Queue, Empty
+from chat_tools.send_email import send_email
 
 
 class Learner(object):
@@ -8,6 +9,8 @@ class Learner(object):
         self.samples_set = set()
         self.stop = False
         self.samples_filename = 'samples.txt'
+
+        self.admins_mail = ['nataf12386@gmail.com', 'odedwar@gmail.com']
 
         self.active_learning_thread = Thread(target=self.apply_active_learning)
         self.active_learning_thread.start()
@@ -22,6 +25,8 @@ class Learner(object):
                 question, answer, knowledgebase_file_path = self.samples.get(timeout=5)
                 self.samples_set.add((question, answer))
                 self.write_sample(question, answer, knowledgebase_file_path)
+
+                self.update_admin()
                 # print(f'Question: {question} --> Answer: {answer}')
                 # feedback = input("Was the response helpful? (yes/no): ").strip().lower()
                 # if feedback == 'yes':
@@ -37,6 +42,16 @@ class Learner(object):
             outfile.write(f"'{question}'" + ';' + f"'{answer}'" + ';' + f"{knowledgebase_file_path}" + '\n')
             outfile.write('\n')
             print("New line wrote to the samples file")
+
+    def update_admin(self):
+        for mail in self.admins_mail:
+            send_email(email_receiver=mail, display_name="DeceptifyBot", from_email="DeceptifyBot@donotreply.com",
+                       email_subject="Updates from learner",
+                       email_body=f"You have new updates from learner: {self.get_learning_detail()}")
+
+    def get_learning_detail(self):
+        with open(self.samples_filename, 'r') as infile:
+            return infile.read()
 
 
 learner = Learner()
