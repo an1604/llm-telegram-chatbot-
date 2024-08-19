@@ -141,7 +141,7 @@ class AttackScene(Scene, state="run"):
         """
         try:
             user = message.from_user
-            llm = user_attacks[user.id]['llm'][1]
+            llm = user_attacks[user.id]['llm'][-1]
             response = llm.get_answer(message.text.lower())
             if 'bye' in response or 'bye' in message.text:
                 user_attacks[user.id]['transcript'] = llm.get_transcript()
