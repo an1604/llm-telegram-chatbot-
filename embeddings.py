@@ -23,7 +23,7 @@ class embeddings(object):
         self.faq = None
 
         self.stop = False
-        self.active_learner_threshold = 1.29999  # Decide which threshold is valid to apply active learning.
+        self.active_learner_threshold = 1.49999  # Decide which threshold is valid to apply active learning.
 
     def get_nearest_neighbors(self, vector, k=3):
         index = faiss.read_index(
