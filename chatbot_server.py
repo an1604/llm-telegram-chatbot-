@@ -130,8 +130,7 @@ class AttackScene(Scene, state="run"):
             attack = Attack(attack_type=attack_type, profile_name=profile_name)
             llm = llm_factory.generate_new_attack(attack_type, profile_name)
 
-            user_attacks[user.id] = {'llm': (attack, llm),
-                                     }
+            user_attacks[user.id] = {'llm': (attack, llm)}
             await message.answer(llm.get_init_msg())
 
     @on.message()
@@ -141,14 +140,21 @@ class AttackScene(Scene, state="run"):
         """
         try:
             user = message.from_user
+            logging.info(f"from attack_continuation user: {user.id}")
             llm = user_attacks[user.id]['llm'][-1]
-            response = llm.get_answer(message.text.lower())
-            if 'bye' in response or 'bye' in message.text:
-                user_attacks[user.id]['transcript'] = llm.get_transcript()
-                user_attacks[user.user.id]['llm'] = None
-                await message.answer("Goodbye")
-                return await self.wizard.exit()
+            logging.info(f"from attack_continuation user: {user_attacks[user.id]}")
 
+            if llm:
+                response = llm.get_answer(message.text.lower())
+                if 'bye' in response or 'bye' in message.text:
+                    user_attacks[user.id]['transcript'] = llm.get_transcript()
+                    user_attacks[user.user.id]['llm'] = None
+                    await message.answer("Goodbye")
+                    return await self.wizard.exit()
+            else:
+                await message.answer("There was a problem, ask the administrator for help and try again,"
+                                     "or you can just type /type to try it again :)")
+                return await self.wizard.exit()
         except Exception as e:
             print(f"Error: {e}")
             return await message.answer("Please generate a new attack using /type.")
