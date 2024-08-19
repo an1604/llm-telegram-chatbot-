@@ -66,8 +66,10 @@ def handle_routes(attack_router):
     async def transcript_command(message: Message, scenes: ScenesManager, state: FSMContext):
         await scenes.close()
         user_id = message.from_user.id
-        if user_id in user_attacks.keys() and 'transcript' in user_attacks[user_id]:
-            await message.answer(user_attacks[user_id]['transcript'])
+        transcript = user_attacks.get(user_id, {}).get('transcript')
+
+        if transcript:
+            await message.answer(transcript)
         else:
             await message.answer('No transcript is available for you.')
 
