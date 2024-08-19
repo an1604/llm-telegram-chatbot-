@@ -47,7 +47,7 @@ class Learner(object):
         for mail in self.admins_mail:
             send_email(email_receiver=mail, display_name="DeceptifyBot", from_email="DeceptifyBot@donotreply.com",
                        email_subject="Updates from learner",
-                       email_body=f"You have new updates from learner: {self.get_learning_detail()}")
+                       email_body=f"You have new updates from learner:\n\n {self.get_learning_detail()}")
             print(f"mail send to {mail}")
 
     def get_learning_detail(self):

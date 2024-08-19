@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def send_email(email_receiver, display_name,email_subject,email_body, from_email=None):
+def send_email(email_receiver, display_name, email_subject, email_body, from_email=None):
     email_sender = os.getenv('MAIL_USERNAME')
     email_password = os.getenv('MAIL_PASSWORD')
 
@@ -25,8 +25,3 @@ def send_email(email_receiver, display_name,email_subject,email_body, from_email
     with smtplib.SMTP_SSL(os.getenv('MAIL_SERVER'), 465, context=context) as smtp:
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_receiver, em.as_string())
-
-if __name__ == '__main__':
-    send_email(email_receiver='nataf12386@gmail.com', display_name="DeceptifyBot", from_email="DeceptifyBot@donotreply.com",
-               email_subject="Updates from learner",
-               email_body=f"You have new updates from learner")
