@@ -56,9 +56,9 @@ def handle_routes(attack_router):
     @attack_router.message(Command("desc"))
     async def description_command(message: Message, scenes: ScenesManager, state: FSMContext):
         await scenes.close()
-        await message.answer("""
-        Our project focuses on harnessing the power of AI to simulate social engineering attacks, 
-        using advanced technologies like generative AI and deepfakes. 
+        await message.answer(
+            """
+        Our project focuses on harnessing the power of AI to simulate social engineering attacks, using advanced technologies like generative AI and deepfakes. 
         The goal is to help organizations improve their awareness and preparedness against the ever-changing landscape of digital threats.
         """)
 
