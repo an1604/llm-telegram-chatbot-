@@ -1,0 +1,4 @@
+NEW UPDATE FROM DECEPTIFY-BOT!
+You have new updates from learner:
+
+{update}
