@@ -4,6 +4,7 @@ from chat_history import chatHistory
 from embeddings import embeddings
 from prompts.prompts import Prompts
 from learner import learner
+import re
 
 # model_name = 'http://ollama:11434/'  # REPLACE IT TO llama3 IF YOU RUN LOCALLY
 model_name = 'llama3'  # REPLACE IT TO llama3 IF YOU RUN LOCALLY
@@ -28,6 +29,7 @@ class Llm(object):
         self.mimic_name = 'Donald'  # Default value
         self.init_msg = None
         self.end_conv = False
+        self.purpose = None
 
     def get_transcript(self):
         return self.chat_history.get_transcription()
@@ -40,7 +42,7 @@ class Llm(object):
         self.end_conv = False
         self.mimic_name = profile_name
         Prompts.set_role(attack_purpose=attack_purpose)  # Defining the new role according to the purpose.
-
+        self.purpose = attack_purpose
         self.embedding_model.initialize_again(attack_purpose)  # Initialize the embedding with a purpose.
 
         self.chat_history.set_profile_name_for_transcript(profile_name)
@@ -70,15 +72,20 @@ class Llm(object):
         if answer is None:
             chain = self.user_prompt | self.llm
             time1 = time()
-            answer = chain.invoke({
-                "history": self.chat_history.get_chat_history(),
-                'name': self.mimic_name,  # Default value
-                # 'place': 'park',  # Default value
-                # 'target': 'address',  # Default value
-                # 'connection': 'co-worker',  # Default value,
-                # 'principles': prompts.get_principles(),
-                "context": prompt
-            })
+            answer = None
+            validate = self.validate_number(prompt)
+            if validate:
+                answer = validate
+            else:
+                answer = chain.invoke({
+                    "history": self.chat_history.get_chat_history(),
+                    'name': self.mimic_name,  # Default value
+                    # 'place': 'park',  # Default value
+                    # 'target': 'address',  # Default value
+                    # 'connection': 'co-worker',  # Default value,
+                    # 'principles': prompts.get_principles(),
+                    "context": prompt
+                })
             print(time() - time1)
 
         self.chat_history.add_ai_response(answer)
