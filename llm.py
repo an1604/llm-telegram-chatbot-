@@ -72,26 +72,22 @@ class Llm(object):
         if answer is None:
             chain = self.user_prompt | self.llm
             time1 = time()
-            answer = None
-            validate = self.validate_number(prompt)
-            if validate:
-                answer = validate
-            else:
-                answer = chain.invoke({
-                    "history": self.chat_history.get_chat_history(),
-                    'name': self.mimic_name,  # Default value
-                    # 'place': 'park',  # Default value
-                    # 'target': 'address',  # Default value
-                    # 'connection': 'co-worker',  # Default value,
-                    # 'principles': prompts.get_principles(),
-                    "context": prompt
-                })
+            answer = chain.invoke({
+                "history": self.chat_history.get_chat_history(),
+                'name': self.mimic_name,  # Default value
+                # 'place': 'park',  # Default value
+                # 'target': 'address',  # Default value
+                # 'connection': 'co-worker',  # Default value,
+                # 'principles': prompts.get_principles(),
+                "context": prompt
+            })
             print(time() - time1)
 
         self.chat_history.add_ai_response(answer)
 
         if apply_active_learning:
-            add_sample_for_learning(prompt, answer, self.embedding_model.knowledgebase_file_path)
+            self.embedding_model.learn((prompt, answer))
+
         if 'bye' in answer.lower() or 'bye' in prompt.lower():
             self.end_conv = True
             self.flush()
