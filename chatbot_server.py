@@ -1,9 +1,9 @@
 import asyncio
 import logging
-from dataclasses import dataclass
 from os import getenv
 from threading import Event
 from typing import Any
+from models import User, Attack
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import Command
@@ -12,22 +12,22 @@ from aiogram.fsm.scene import Scene, SceneRegistry, ScenesManager, on
 from aiogram.fsm.storage.memory import SimpleEventIsolation
 from aiogram.types import Message
 
-from llm import llm_factory
 from dotenv import load_dotenv
 from learner import learner
 
 load_dotenv()
 
 TOKEN = getenv("DECEPTIFYBOT_TOKEN")
-user_attacks = {}
+users = {}
 
 
-@dataclass
-class Attack:
-    def __init__(self, attack_type, profile_name):
-        self.attack_type = attack_type
-        self.profile_name = profile_name
-        self.llm = llm_factory.generate_new_attack(attack_type, profile_name)
+def get_or_create_user(user):
+    # Checks if the user exists, if not, it will add the user to the dictionary.
+    user_id = user.id
+    if user_id not in users.keys():
+        users[user_id] = User(user_id=user_id,
+                              user_name=user.username if user.username else f"{user.first_name} {user.last_name}".strip())
+    return users[user_id]
 
 
 def handle_routes(attack_router):
@@ -41,17 +41,20 @@ def handle_routes(attack_router):
     @attack_router.message(Command("start"))
     async def command_start(message: Message, scenes: ScenesManager):
         await scenes.close()
+        get_or_create_user(user=message.from_user)
         await message.answer(
-            "Hi! It's Deceptify bot. To start a demo, first use the /type command.")
+            "Hi! It's Deceptify bot. To start a demo attack, first use the /type command.")
 
     @attack_router.message(Command("type"))
     async def attack_type_command(message: Message, scenes: ScenesManager, state: FSMContext):
         await scenes.close()
         await state.update_data(attack_type=None)
-        await message.answer("Choose an attack type:\n"
-                             "1. Bank\n"
-                             "2. Delivery\n"
-                             "3. Hospital")
+        get_or_create_user(user=message.from_user)
+
+        await message.answer("Choose your attack (type the choice number or the name of the attack):\n"
+                             "1.Bank\n"
+                             "2.Delivery\n"
+                             "3.Hospital")
 
     @attack_router.message(Command("desc"))
     async def description_command(message: Message, scenes: ScenesManager, state: FSMContext):
@@ -61,35 +64,79 @@ def handle_routes(attack_router):
         Our project focuses on harnessing the power of AI to simulate social engineering attacks, using advanced technologies like generative AI and deepfakes. 
         The goal is to help organizations improve their awareness and preparedness against the ever-changing landscape of digital threats.
         """)
+        get_or_create_user(user=message.from_user)
+
+    @attack_router.message(Command('continue'))
+    async def continue_command(message: Message, scenes: ScenesManager, state: FSMContext):
+        await scenes.close()
+        user = get_or_create_user(user=message.from_user)
+        if user.is_in_attack:
+            await message.answer(user.current_answer)
+            await scenes.enter(AttackScene, state, step=1)
+        else:
+            await message.answer("No ongoing attack found. Please start a new attack using /start.")
 
     @attack_router.message(Command('transcript'))
     async def transcript_command(message: Message, scenes: ScenesManager, state: FSMContext):
         await scenes.close()
-        user_id = message.from_user.id
-        transcript = user_attacks.get(user_id, {}).get('transcript')
+        user = get_or_create_user(message.from_user)
 
-        if transcript:
-            await message.answer(transcript)
+        if user and not user.is_in_attack:
+            transcript = user.transcript
+            if transcript:
+                await message.answer(transcript)
+            else:
+                await message.answer('No transcript is available for you.')
         else:
-            await message.answer('No transcript is available for you.')
+            if not user.is_restart_session():
+                await message.answer(
+                    f"I am sorry but I can not provide you information during the attack itself.\n"
+                    f"run /continue to come back to the attack, or /start to start a new attack.")
+            else:
+                await message.answer(
+                    f"Your message can not be processed on the last time, It seems to be a problem on the server.\n"
+                    f"I am sorry but I restarted your session. run /start to start a new attack.")
 
     @attack_router.message(F.text.in_(['Bank', 'Delivery', 'Hospital']))
     async def set_attack_type_from_str(message: Message, state: FSMContext):
         await state.update_data(attack_type=message.text)
-        await message.answer(f"Attack type '{message.text}' chosen. You can now run the attack with /run.")
+        user = get_or_create_user(user=message.from_user)
+        if not user.is_in_attack:
+            await message.answer(f"Attack type '{message.text}' chosen. You can now run the attack with /run.")
+        else:
+            if not user.is_restart_session():
+                await message.answer(
+                    f"Your message can not be processed, maybe the format or the type is not correct.\n"
+                    f"run /continue to come back to the attack, or /start to start a new attack.")
+            else:
+                await message.answer(
+                    f"Your message can not be processed on the last time, It seems to be a problem on the server.\n"
+                    f"I am sorry but I restarted your session. Run /start to start a new attack.")
 
     @attack_router.message(F.text.in_(['1', '2', '3']))
     async def set_attack_type_from_number(message: Message, state: FSMContext):
-        attack_type = None
-        if message.text == "1":
-            attack_type = 'Bank'
-        elif message.text == "2":
-            attack_type = 'Delivery'
-        else:
-            attack_type = 'Hospital'
+        user = get_or_create_user(user=message.from_user)
+        if not user.is_in_attack:
+            attack_type = None
+            if message.text == "1":
+                attack_type = 'Bank'
+            elif message.text == "2":
+                attack_type = 'Delivery'
+            else:
+                attack_type = 'Hospital'
 
-        await state.update_data(attack_type=attack_type)
-        await message.answer(f"Attack type '{attack_type}' chosen. You can now run the attack with /run.")
+            await state.update_data(attack_type=attack_type)
+            await message.answer(f"Attack type '{attack_type}' chosen. You can now run the attack with /run.")
+
+        else:
+            if not user.is_restart_session():
+                await message.answer(
+                    f"Your message can not be processed, maybe the format or the type is not correct.\n"
+                    f"run /continue to come back to the attack, or /start to start a new attack.")
+            else:
+                await message.answer(
+                    f"Your message can not be processed on the last time, It seems to be a problem on the server.\n"
+                    f"I am sorry but I restarted your session. Run /start to start a new attack.")
 
 
 def create_dispatcher(attack_router):
@@ -124,14 +171,10 @@ class AttackScene(Scene, state="run"):
                 await message.answer("Please choose an attack type first using /type.")
                 return
 
-            user = message.from_user
-            profile_name = user.username if user.username else f"{user.first_name} {user.last_name}".strip()
+            user = get_or_create_user(message.from_user)
+            user.start_new_attack(attack_type)
 
-            attack = Attack(attack_type=attack_type, profile_name=profile_name)
-            llm = llm_factory.generate_new_attack(attack_type, profile_name)
-
-            user_attacks[user.id] = {'llm': (attack, llm)}
-            await message.answer(llm.get_init_msg())
+            await message.answer(user.llm.get_init_msg())
 
     @on.message()
     async def attack_continuation(self, message: Message) -> None:
@@ -139,16 +182,12 @@ class AttackScene(Scene, state="run"):
         Method triggered when the user sends a message that is not a command or an answer.
         """
         try:
-            user = message.from_user
-            logging.info(f"from attack_continuation user: {user.id}")
-            llm = user_attacks[user.id]['llm'][-1]
-            logging.info(f"from attack_continuation user: {user_attacks[user.id]}")
+            user = get_or_create_user(message.from_user)
 
-            if llm:
-                response = llm.get_answer(message.text.lower())
+            if user:
+                response = user.get_answer_from_llm(message.text.lower())
                 if 'bye' in response or 'bye' in message.text:
-                    user_attacks[user.id]['transcript'] = llm.get_transcript()
-                    user_attacks[user.user.id]['llm'] = None
+                    user.end_attack()
                     await message.answer("Goodbye")
                     return await self.wizard.exit()
             else:
@@ -182,15 +221,15 @@ class ChatBot(object):
     def stop(self):
         self.shutdown_event.set()
         self.dispatcher.shutdown()
-        learner.stop_active_learning()
 
 
 async def main():
     chatbot = ChatBot()
     try:
         await chatbot.start()
-    except (KeyboardInterrupt, SystemExit):
+    except KeyboardInterrupt:
         logging.info("Shutting down bot...")
+        learner.stop_active_learning()
         chatbot.stop()
 
 

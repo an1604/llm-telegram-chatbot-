@@ -8,7 +8,9 @@ class Learner(object):
     def __init__(self):
         self.samples = Queue()
         self.samples_set = set()
-        self.stop = False
+
+        self.stop_flag = False
+
         self.wait_with_update = 0
         self.samples_filename = 'samples.txt'
 
@@ -22,7 +24,7 @@ class Learner(object):
 
     def apply_active_learning(self):
         print('runs active learning thread')
-        while not self.stop:
+        while not self.stop_flag:
             try:
                 question, answer, knowledgebase_file_path = self.samples.get(timeout=5)
                 self.samples_set.add((question, answer))
@@ -30,14 +32,12 @@ class Learner(object):
                 self.wait_with_update += 1
 
                 self.update_admin()
-                # print(f'Question: {question} --> Answer: {answer}')
-                # feedback = input("Was the response helpful? (yes/no): ").strip().lower()
-                # if feedback == 'yes':
             except Empty:
                 continue
+        print('active learning done')
 
     def stop_active_learning(self):
-        self.stop = True
+        self.stop_flag = True
         self.active_learning_thread.join()
 
     def write_sample(self, question, answer, knowledgebase_file_path):

@@ -63,39 +63,73 @@ class Llm(object):
         return [msg for msg in self.chat_history.get_chat_history() if msg not in ['user', 'assistant']]
 
     def get_answer(self, prompt):
-        self.chat_history.add_human_message(prompt)
-        if not self.embedd_custom_knowledgebase:
-            self.embedding_model.generate_faq_embedding()
-            self.embedd_custom_knowledgebase = True
+        if not self.end_conv:  # Checks the conversation state
+            self.chat_history.add_human_message(prompt)
+            if not self.embedd_custom_knowledgebase:
+                self.embedding_model.generate_faq_embedding()
+                self.embedd_custom_knowledgebase = True
 
-        answer, apply_active_learning = self.embedding_model.get_answer_from_embedding(prompt)
-        if answer is None:
-            chain = self.user_prompt | self.llm
-            time1 = time()
-            answer = chain.invoke({
-                "history": self.chat_history.get_chat_history(),
-                'name': self.mimic_name,  # Default value
-                # 'place': 'park',  # Default value
-                # 'target': 'address',  # Default value
-                # 'connection': 'co-worker',  # Default value,
-                # 'principles': prompts.get_principles(),
-                "context": prompt
-            })
-            print(time() - time1)
+            answer, apply_active_learning = self.embedding_model.get_answer_from_embedding(prompt)
+            if answer is None:
+                chain = self.user_prompt | self.llm
+                time1 = time()
+                answer = None
+                validate = self.validate_number(prompt)
+                if validate:
+                    answer = validate
+                else:
+                    answer = chain.invoke({
+                        "history": self.chat_history.get_chat_history(),
+                        'name': self.mimic_name,  # Default value
+                        # 'place': 'park',  # Default value
+                        # 'target': 'address',  # Default value
+                        # 'connection': 'co-worker',  # Default value,
+                        # 'principles': prompts.get_principles(),
+                        "context": prompt
+                    })
+                print(time() - time1)
 
-        self.chat_history.add_ai_response(answer)
+            self.chat_history.add_ai_response(answer)
+            self.actions_for_next_state(apply_active_learning, prompt,
+                                        answer)  # Function that getting the llm for the next state
 
-        if apply_active_learning:
-            learner.add_sample((prompt, answer, self.embedding_model.knowledgebase_file_path))
+            return answer
 
-        if 'bye' in answer.lower() or 'bye' in prompt.lower():
-            self.end_conv = True
-            self.flush()
-
-        return answer
+        else:
+            return 'The conversation is done. Have a great day!'
 
     def is_conversation_done(self):
         return self.end_conv
+
+    def validate_number(self, prompt):
+        # Regular expression to find the number
+        number = re.findall(r'\d+', prompt.replace(" ", ""))
+        # Convert the first match to an integer (or float if needed)
+        if number:
+            if self.purpose == "Bank":  # account number
+                if int(number[0]) == 0:
+                    return "This is not a real number"
+                elif len(number[0]) == 6:
+                    return "Thank you, we have solved the issue. Goodbye"
+
+                else:
+                    return "I need a 6 digit account number"
+            elif self.purpose == "Hospital":
+                if int(number[0]) == 0:
+                    return "This is not a real number"
+                elif len(number[0]) == 9:  # check for 0 at the start of the number
+                    return "Thank you, we have opened your account. Goodbye"
+                else:
+                    return "I need a 9 digit ID"
+        return None
+
+    def actions_for_next_state(self, apply_active_learning, prompt, answer):
+        if apply_active_learning:
+            add_sample_for_learning(prompt, answer, self.embedding_model.knowledgebase_file_path)
+
+        if 'bye' in answer.lower() or 'bye' in prompt.lower():
+            self.end_conv = True
+            # self.flush() IN THE CHATBOT CASE, WE DONT NEED TO USE flush() AT ALL!
 
 
 class llm_factory(object):
