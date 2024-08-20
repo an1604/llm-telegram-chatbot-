@@ -188,12 +188,16 @@ class AttackScene(Scene, state="run"):
                 response = user.get_answer_from_llm(message.text.lower())
                 if 'bye' in response or 'bye' in message.text:
                     user.end_attack()
-                    await message.answer("Goodbye")
+                    await message.answer(response)
+
                     return await self.wizard.exit()
+
             else:
                 await message.answer("There was a problem, ask the administrator for help and try again,"
                                      "or you can just type /type to try it again :)")
+
                 return await self.wizard.exit()
+
         except Exception as e:
             print(f"Error: {e}")
             return await message.answer("Please generate a new attack using /type.")
