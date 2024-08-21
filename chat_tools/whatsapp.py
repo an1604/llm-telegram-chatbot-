@@ -14,7 +14,7 @@ class WhatsAppBot(object):
 
     @staticmethod
     def send_text_message_to_group(group_id, message):
-        sendwhatmsg_to_group_instantly(group_id, message)
+        pywhatkit.sendwhatmsg_to_group_instantly(group_id, message)
 
     @staticmethod
     def get_message_template(zoom_url, profile_name):

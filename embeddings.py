@@ -5,7 +5,6 @@ import faiss
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
-from queue import Queue, Empty
 
 
 class embeddings(object):
@@ -23,17 +22,18 @@ class embeddings(object):
         self.faq = None
 
         self.stop = False
-        self.active_learner_threshold = 1.49999  # Decide which threshold is valid to apply active learning.
+        self.active_learner_threshold = 1.39999  # Decide which threshold is valid to apply active learning.
 
     def get_nearest_neighbors(self, vector, k=3):
         index = faiss.read_index(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), f'indexes/{self.knowledgebase}-faiss.index'))
+        if isinstance(vector, tuple):
+            vector = np.array(vector)
         query_vector = vector.astype("float32").reshape(1, -1)
         distances, indices = index.search(query_vector, k)
         return indices, distances
 
     def flush(self):
-        self.save_sentences_map()  # Saving the sentence map for feature extraction (reduce computation).
         self.sentences_map = {}
 
         self.knowledgebase_file_path = None
@@ -88,11 +88,16 @@ class embeddings(object):
 
     def get_embedding(self, _input):
         embedding = self.embedding_model.encode(_input)
-        return np.array([embedding])  # Ensure it returns a 2D array
+        # return np.array([embedding])  # Ensure it returns a 2D array
+        return tuple(embedding)
 
     def get_answer_from_embedding(self, _input, threshold=0.7):
         print(_input)
         prompt_embedding = self.get_embedding(_input.lower())  # Get the embedding representation for the prompt
+
+        if isinstance(prompt_embedding, tuple):
+            prompt_embedding = np.array(prompt_embedding).reshape(1, -1).astype("float32")
+
         indices, distances = self.get_nearest_neighbors(prompt_embedding)
 
         closest_distance = distances[0][0]
