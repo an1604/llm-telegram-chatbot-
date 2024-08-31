@@ -67,12 +67,12 @@ def handle_routes(attack_router):
         """)
         get_or_create_user(user=message.from_user)
 
-    @attack_router.message(Command('answer'))
-    async def answer_command(message: Message, scenes: ScenesManager, state: FSMContext):
-        await scenes.close()
-        msg = message.text
-        answer = llm.get_general_answer(msg)
-        await message.answer(answer)
+    # @attack_router.message(Command('answer'))
+    # async def answer_command(message: Message, scenes: ScenesManager, state: FSMContext):
+    #     await scenes.close()
+    #     msg = message.text
+    #     answer = llm.get_general_answer(msg)
+    #     await message.answer(answer)
 
     @attack_router.message(Command('continue'))
     async def continue_command(message: Message, scenes: ScenesManager, state: FSMContext):
@@ -160,6 +160,7 @@ def create_dispatcher(attack_router):
     # by default, Scene will be mounted to the router that passed to the SceneRegistry,
     # but you can specify the router explicitly using the `router` argument
     scene_registry.add(AttackScene)
+    scene_registry.add(GeneralConversationScene)
 
     return dispatcher
 
@@ -209,6 +210,42 @@ class AttackScene(Scene, state="run"):
         except Exception as e:
             print(f"Error: {e}")
             return await message.answer("Please generate a new attack using /type.")
+
+        return await message.answer(text=response)
+
+
+class GeneralConversationScene(Scene, state="answer"):
+    @on.message.enter()
+    async def on_enter(self, message: Message, state: FSMContext, step: int | None = 0) -> Any:
+        """
+        Method triggered when the user enters the attack scene.
+        """
+        if not step:
+            # This is the first step
+            data = await state.get_data()
+
+            user = get_or_create_user(message.from_user)
+            await message.answer("Let's talk")
+
+    @on.message()
+    async def attack_continuation(self, message: Message) -> None:
+        """
+        Method triggered when the user sends a message that is not a command or an answer.
+        """
+        try:
+            user = get_or_create_user(message.from_user)
+            if user:
+                response = llm.get_general_answer(message.text.lower())
+                if 'bye' in response or 'bye' in message.text:
+                    await message.answer('See ya')
+                    return await self.wizard.exit()
+            else:
+                await message.answer("There was a problem, ask the administrator for help and try again,"
+                                     "or you can just type /help to explore the options you have")
+                return await self.wizard.exit()
+        except Exception as e:
+            print(f"Error: {e}")
+            return await message.answer("Please explore the options you have /help.")
 
         return await message.answer(text=response)
 
