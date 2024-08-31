@@ -146,6 +146,11 @@ def handle_routes(attack_router):
                     f"Your message can not be processed on the last time, It seems to be a problem on the server.\n"
                     f"I am sorry but I restarted your session. Run /start to start a new attack.")
 
+        @attack_router.message.register(GeneralConversationScene.as_handler())
+        async def start_general_conversation(message: Message, scenes: ScenesManager):
+            await message.answer("Let's talk!")
+            await scenes.enter(GeneralConversationScene)
+
 
 def create_dispatcher(attack_router):
     # Event isolation is needed to correctly handle fast user responses
@@ -160,7 +165,6 @@ def create_dispatcher(attack_router):
     # by default, Scene will be mounted to the router that passed to the SceneRegistry,
     # but you can specify the router explicitly using the `router` argument
     scene_registry.add(AttackScene)
-    scene_registry.add(GeneralConversationScene)
 
     return dispatcher
 
