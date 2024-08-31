@@ -27,8 +27,9 @@ class Prompts(object):
         return Prompts.PRINCIPLES.format(target=target)
 
     @staticmethod
-    def get_role(role: str, name='Donald', place='park', target='address',
-                 connection='co-worker'):
-        principles = Prompts.get_principles()
-        r = role.format(name=name, place=place, target=target, connection=connection, principles=principles)
-        return r
+    def get_role():
+        try:
+            return get_text_from_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'role.txt'))
+        except Exception as e:
+            print(e)
+            return None

@@ -31,6 +31,8 @@ class Llm(object):
         self.end_conv = False
         self.purpose = None
 
+        self.general_role = Prompts.get_role()
+
     def get_transcript(self):
         return self.chat_history.get_transcription()
 
@@ -130,6 +132,9 @@ class Llm(object):
         if 'bye' in answer.lower() or 'bye' in prompt.lower():
             self.end_conv = True
             # self.flush() IN THE CHATBOT CASE, WE DONT NEED TO USE flush() AT ALL!
+
+    def get_general_answer(self, msg):
+        return self.llm.invoke(self.general_role.format(context=msg))
 
 
 class llm_factory(object):

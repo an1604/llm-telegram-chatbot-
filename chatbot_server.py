@@ -14,6 +14,7 @@ from aiogram.types import Message
 
 from dotenv import load_dotenv
 from learner import learner
+from llm import llm
 
 load_dotenv()
 
@@ -65,6 +66,13 @@ def handle_routes(attack_router):
         The goal is to help organizations improve their awareness and preparedness against the ever-changing landscape of digital threats.
         """)
         get_or_create_user(user=message.from_user)
+
+    @attack_router.message(Command('answer'))
+    async def answer_command(message: Message, scenes: ScenesManager, state: FSMContext):
+        await scenes.close()
+        msg = message.text
+        answer = llm.get_general_answer(msg)
+        await message.answer(answer)
 
     @attack_router.message(Command('continue'))
     async def continue_command(message: Message, scenes: ScenesManager, state: FSMContext):
