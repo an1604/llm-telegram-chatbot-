@@ -2,7 +2,6 @@
 "you there";"Can you repeat that"
 "are you here";"Can you repeat that"
 "hello";"We had a suspicious activity in your account and we need verification to make action"
-"hi";"We had a suspicious activity in your account and we need verification to make action"
 "hello there";"We had a suspicious activity in your account and we need verification to make action"
 "what activity";"We detected some suspicious transactions"
 "what happened";"We detected some suspicious transactions"
@@ -29,7 +28,7 @@
 "bye";"Goodbye"
 "goodbye";"Goodbye"
 "later";"Goodbye"
-"i gave you my number";"I apologize but I missed that, can you repeat it"
+"but i already gave it to you";"I apologize but I missed that, can you repeat it"
 "do you need the whole number";"I only need last 6 digits of the account number"
 "can you tell me more";"Large purchase from Amazon for 500 dollars, need verification."
 
