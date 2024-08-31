@@ -221,10 +221,6 @@ class GeneralConversationScene(Scene, state="answer"):
         Method triggered when the user enters the attack scene.
         """
         if not step:
-            # This is the first step
-            data = await state.get_data()
-
-            user = get_or_create_user(message.from_user)
             await message.answer("Let's talk")
 
     @on.message()
@@ -233,21 +229,14 @@ class GeneralConversationScene(Scene, state="answer"):
         Method triggered when the user sends a message that is not a command or an answer.
         """
         try:
-            user = get_or_create_user(message.from_user)
-            if user:
-                response = llm.get_general_answer(message.text.lower())
-                if 'bye' in response or 'bye' in message.text:
-                    await message.answer('See ya')
-                    return await self.wizard.exit()
-            else:
-                await message.answer("There was a problem, ask the administrator for help and try again,"
-                                     "or you can just type /help to explore the options you have")
+            response = llm.get_general_answer(message.text.lower())
+            if 'bye' in response or 'bye' in message.text:
+                await message.answer('See ya')
                 return await self.wizard.exit()
+            return await message.answer(text=response)
         except Exception as e:
             print(f"Error: {e}")
             return await message.answer("Please explore the options you have /help.")
-
-        return await message.answer(text=response)
 
 
 class ChatBot(object):
