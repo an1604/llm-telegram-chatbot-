@@ -20,6 +20,7 @@ The chatbot is built using the following technologies:
 - ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white) - A deep learning framework for building and training machine learning models.
 - ![Hugging Face](https://img.shields.io/badge/Hugging%20Face-FFCA28?style=for-the-badge&logo=huggingface&logoColor=black) - A platform providing state-of-the-art NLP models and tools.
 
+
 ## Getting Started
 
 To set up and run the Telegram chatbot, follow these steps:
@@ -27,23 +28,28 @@ To set up and run the Telegram chatbot, follow these steps:
 1. **Clone the repository**:  
    ```bash
    git clone https://github.com/yourusername/telegram-chatbot-active-learning.git
+   ```
 
 2. **Navigate to the project directory**:  
-Change the current directory to where the project files are located by running:  
-```bash
-cd telegram-chatbot-active-learning
+   Change the current directory to where the project files are located by running:  
+   ```bash
+   cd telegram-chatbot-active-learning
+   ```
 
 3. **Install the required dependencies**:  
-Ensure you have Python installed, then run the following command to install all necessary dependencies:  
-```bash
-pip install -r requirements.txt
+   Ensure you have Python installed, then run the following command to install all necessary dependencies:  
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 4. **Configure the bot token**:  
-Obtain a bot token from [BotFather](https://t.me/BotFather) on Telegram and set it as an environment variable:  
-```bash
-export TELEGRAM_TOKEN='your-telegram-token'
+   Obtain a bot token from [BotFather](https://t.me/BotFather) on Telegram and set it as an environment variable:  
+   ```bash
+   export TELEGRAM_TOKEN='your-telegram-token'
+   ```
 
 5. **Run the chatbot server**:  
-Start the chatbot by running the following command:  
-```bash
-python chatbot_server.py
+   Start the chatbot by running the following command:  
+   ```bash
+   python chatbot_server.py
+   ```
